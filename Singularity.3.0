@@ -1,0 +1,24 @@
+Bootstrap: docker
+From: urgi/docker_vre_aio:v3.0
+
+%environment
+    export REPET_PATH="/usr/local/REPET_linux-x64-3.0"
+    export PATH="/usr/local/REPET_linux-x64-3.0/bin:${PATH}"
+
+%files
+  repet-commands /usr/local/REPET_linux-x64-3.0/repet-commands
+
+%runscript
+  SINGULARITY_BASENAME=$(basename $SINGULARITY_NAME)
+
+  if echo $SINGULARITY_BASENAME | grep -qxf $REPET_PATH/repet-commands; then
+    exec $SINGULARITY_NAME "$@"
+  else
+    /bin/echo -e "This Singularity image cannot provide a single entrypoint. Please use \"singularity exec $SINGULARITY_NAME <cmd>\", where <cmd> is one of the following:\n"
+    exec cat $REPET_PATH/repet-commands
+  fi
+
+%help
+    This assumes that $PATH below contains symlinks to the container image
+    See https://github.com/powerPlant/README#dealing-with-multiple-entrypoints
+

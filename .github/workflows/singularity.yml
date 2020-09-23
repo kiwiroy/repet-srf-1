@@ -1,0 +1,35 @@
+name: Singularity Build
+on: [push]
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        singularity_version:
+          - '3.5.3'
+        repet_version:
+          - '3.0'
+    container:
+      image: quay.io/singularity/singularity:v${{ matrix.singularity_version }}
+      options: --privileged
+    steps:
+    - name: Check out code for the container build
+      uses: actions/checkout@v1
+
+    - name: Build container
+      run: make build RECIPE_FILE=${SINGULARITY_FILE}
+      env:
+        SINGULARITY_FILE: Singularity.${{matrix.repet_version}}
+
+    - name: Generate dist
+      run: make dist RECIPE_FILE=${SINGULARITY_FILE}
+      env:
+        SINGULARITY_FILE: Singularity.${{matrix.repet_version}}
+
+    - name: Store artefact
+      uses: actions/upload-artifact@v2
+      with:
+        name: repet-${{ matrix.repet_version }}-${{ github.sha }}
+        path: '*.tar.gz'
